@@ -9,6 +9,7 @@ from transformers.models.llama.modeling_llama import (
     LlamaAttention,
     LlamaFlashAttention2,
     LlamaSdpaAttention,
+    LlamaConfig
 )
 
 from transformers.modeling_outputs import BaseModelOutputWithPast
@@ -299,6 +300,8 @@ class PiToMeLlamaDecoderLayer(LlamaDecoderLayer):
         return outputs
 
 class PiToMeLlamaModel(LlamaModel):
+
+
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -401,7 +404,7 @@ class PiToMeLlamaModel(LlamaModel):
         )
 
 
-def apply_patch(
+def convert(
    model: LlamaModel, trace_source: bool = False, prop_attn: bool = True, sigma=0.9, output_energy_score=False, output_attn=False):
     """
     Applies ToMe to this transformer. Afterward, set r using model.r.
@@ -414,7 +417,6 @@ def apply_patch(
     """
     print('using', 'pitome')
 
-    model.__class__ =  PiToMeLlamaModel
     model.ratio = 1.0 
     model.r=0.0
     
@@ -438,3 +440,5 @@ def apply_patch(
             module.__class__ = PiToMeLlamaDecoderLayer
             module.init_sigma(sigma) 
             module._pitome_info = model._pitome_info
+        elif isinstance(module, LlamaModel):
+            module.__class__ = PiToMeLlamaModel 

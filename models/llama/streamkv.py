@@ -12,7 +12,7 @@ from transformers.models.llama.modeling_llama import (
 )
 
 from transformers.modeling_outputs import BaseModelOutputWithPast
-from typing import Optional, Tuple, Union, List
+from typing import Optional, Tuple, Union, List, Callable
 from transformers.utils import logging
 from transformers.models.llama.modeling_llama import (
     repeat_kv,
@@ -20,6 +20,113 @@ from transformers.models.llama.modeling_llama import (
 )
 
 logger = logging.get_logger(__name__)
+
+
+def do_nothing(x, mode=None):
+    return x
+
+
+def calculate_energy_score(metric:torch.Tensor, sigma:float=0.5):
+    metric = F.normalize(metric, p=2, dim=-1) 
+    sim = metric@metric.transpose(-1,-2)
+    energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
+    return energy_score
+
+
+def pitome_text(
+    metric: torch.Tensor, 
+    ratio:float=1.0,
+    sigma :torch.Tensor=0.5,
+):
+    with torch.no_grad():
+        if len(metric.shape)==4:
+            B, T, _ = metric.shape 
+        else:
+            B, T, _, _ = metric.shape 
+
+        if len(metric.shape) == 2:
+            metric = metric[None,...]
+
+        B,T,_ = metric.shape
+        r = math.floor(T- T*ratio)
+        batch_idx = torch.arange(B).unsqueeze_(1).to(metric.device)
+
+        metric = F.normalize(metric, p=2, dim=-1) 
+        sim = metric@metric.transpose(-1,-2)
+        energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
+        indices =  torch.argsort(energy_score, descending=True)
+
+        merge_idx = indices[..., :2*r]
+        protected_idx = indices[..., 2*r:]
+        a_idx, b_idx = merge_idx[..., ::2], merge_idx[..., 1::2]
+
+        sim = sim.gather(dim=-1, index=b_idx.unsqueeze(-2).expand(B, T, r)) 
+        sim = sim.gather(dim=-2, index=a_idx.unsqueeze(-1).expand(B, r, r ))
+        _, dst_idx = sim.max(dim=-1) 
+
+    def merge(x: torch.Tensor, mode="mean") -> torch.Tensor:
+        B, _, C = x.shape
+
+        protected = x[batch_idx, protected_idx, :]
+        src, dst = x[batch_idx, a_idx, :], x[batch_idx,  b_idx, :]
+        dst = dst.scatter_reduce(-2, dst_idx.unsqueeze(2).expand(B, r, C), src, reduce=mode)
+        return torch.cat([protected, dst], dim=1)
+
+    return merge,  
+
+
+def merge_mean(
+    merge: Callable, x: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    x = merge(x, mode="mean")
+    return x
+
+def prune(
+    merge: Callable, x: torch.Tensor
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Applies the merge function by taking a average based on token size.
+    Returns the merged tensor and the new token sizes.
+    """
+    x = merge(x, mode="prune")
+    return x
+
+def merge_wavg(
+    merge: Callable, x: torch.Tensor, size: torch.Tensor = None
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Applies the merge function by taking a weighted average based on token size.
+    Returns the merged tensor and the new token sizes.
+    """
+    if size is None:
+        size = torch.ones_like(x[..., 0, None])
+
+    x = merge(x*size, mode="sum")
+    size = merge(size, mode="sum")
+    x = x / size
+
+    return x, size 
+
+def merge_source(
+    merge: Callable, x: torch.Tensor, source: torch.Tensor = None
+) -> torch.Tensor:
+    """
+    For source tracking. Source is an adjacency matrix between the initial tokens and final merged groups.
+    x is used to find out how many tokens there are in case the source is None.
+    """
+    if source is None:
+        n, t, _ = x.shape
+        source = torch.eye(t, device=x.device)[None, ...].expand(n, t, t)
+
+    source = merge(source, mode="amax")
+    return source
+
+def merge_attention_mask(
+    merge, attention_mask: torch.Tensor
+): 
+    attention_mask = merge(attention_mask, mode="amax")
+    return attention_mask 
+
 
 class PiToMeLlamaAttention(LlamaAttention):
     def forward(
@@ -295,8 +402,16 @@ class PiToMeLlamaModel(LlamaModel):
 
 
 def convert(
-   model: LlamaModel, trace_source: bool = False, prop_attn: bool = True, margin=0.9, use_k=False, output_attn=False):
-   
+   model: LlamaModel, trace_source: bool = False, prop_attn: bool = True, sigma=0.9, output_energy_score=False, output_attn=False):
+    """
+    Applies ToMe to this transformer. Afterward, set r using model.r.
+
+    If you want to know the source of each token (e.g., for visualization), set trace_source = true.
+    The sources will be available at model._pitome_info["source"] afterward.
+
+    For proportional attention, set prop_attn to True. This is only necessary when evaluating models off
+    the shelf. For trianing and for evaluating MAE models off the self set this to be False.
+    """
     print('using', 'pitome')
 
     model.__class__ =  PiToMeLlamaModel
@@ -307,6 +422,8 @@ def convert(
     model._pitome_info = {
         "sink_size": 4,
         "cache_size": 2024,
+        "output_attn": output_attn,
+        "output_energy_score": output_energy_score,
         "trace_source": trace_source,
         "prop_attn": prop_attn,
     }
@@ -319,5 +436,5 @@ def convert(
             module.__class__ = PiToMeLLamaSdpaAttention
         elif isinstance(module, LlamaDecoderLayer):
             module.__class__ = PiToMeLlamaDecoderLayer
-            module.init_sigma(margin) 
+            module.init_sigma(sigma) 
             module._pitome_info = model._pitome_info
