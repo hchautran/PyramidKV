@@ -9,7 +9,7 @@ from transformers.models.llama.modeling_llama import (
     LlamaAttention,
     LlamaFlashAttention2,
     LlamaSdpaAttention,
-    LlamaConfig
+    LlamaForCausalLM
 )
 
 from transformers.modeling_outputs import BaseModelOutputWithPast
@@ -285,6 +285,7 @@ class PiToMeLlamaDecoderLayer(LlamaDecoderLayer):
             cache_position=cache_position,
         )
         hidden_states = residual + hidden_states
+        print(hidden_states.shape)
 
         # Fully Connected
         residual = hidden_states
