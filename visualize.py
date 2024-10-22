@@ -1,9 +1,13 @@
 
 import torch
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from models.llama.pitomekv import convert
 from accelerate import Accelerator
+import seaborn as sns
+import numpy as np
 import os
 
 accelerator = Accelerator()
@@ -21,6 +25,12 @@ if not os.path.exists(directory):
    os.makedirs(directory)
 
 
+def cal_energy(metric:torch.Tensor, sigma:float=0.1):
+   metric = F.normalize(metric, p=2, dim=-1) 
+   sim = metric@metric.transpose(-1,-2)
+   energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
+   return energy_score
+
 
 def manual_infer_with_llama_with_attention(prompt, max_length=50):
 
@@ -30,12 +40,10 @@ def manual_infer_with_llama_with_attention(prompt, max_length=50):
    for _ in range(max_length):
 
       raw_outputs = model(input_ids, output_attentions=True, return_dict=True)
-      print(raw_outputs)
       output = raw_outputs.logits
       next_token_logits = output[:, -1, :]
       
       attentions = raw_outputs.attentions
-   
 
       next_token = torch.argmax(next_token_logits, dim=-1)
 
@@ -46,7 +54,7 @@ def manual_infer_with_llama_with_attention(prompt, max_length=50):
       
    for i in range(len(attentions)):
       all_layers_attentions.append(attentions[i].detach().cpu())
-   return tokenizer.decode(input_ids[0], skip_special_tokens=True), input_ids[0], all_layers_attentions
+   return tokenizer.decode(input_ids[0], skip_special_tokens=True), input_ids[0], all_layers_attentions, raw_outputs.past_key_values
 
 # 3document in example
 
@@ -69,7 +77,8 @@ Question: Who sent naval ships to the body of water that joins the Atlantic and 
 Answer:  [/INST]
 """
 
-results, input_ids, all_layers_attentions = manual_infer_with_llama_with_attention(input_prompt)
+
+results, input_ids, all_layers_attentions, past_key_values = manual_infer_with_llama_with_attention(input_prompt)
 
 for layer_idx, attentions in enumerate(all_layers_attentions):
    attention = attentions * 10000
@@ -87,26 +96,29 @@ for layer_idx, attentions in enumerate(all_layers_attentions):
    id2token = id2token[0:]
    indices = list(range(len(id2token)))
 
-   import matplotlib.pyplot as plt
-   import seaborn as sns
-   import numpy as np
 
 
    num_heads = 1
    sequence_length = 10
 
    attention = attention.cpu().detach().numpy()
+   energy = cal_energy(past_key_values[layer_idx][0])
+   energy_np = energy.mean(1).cpu().detach().numpy()
 
-   plt.figure(figsize=(100, 80))
+   fig = plt.figure(figsize=(120, 80))
+   gs = gridspec.GridSpec(9, 8, 1, 1])
 
-   fig, ax = plt.subplots()
-   ax.imshow(attention, vmax=100)
-   ax.set_xticks(np.arange(len(id2token)), labels=[])
-   ax.set_yticks(np.arange(len(id2token)), labels=[])
+   ax1 = fig.add_subplot(gs[:, -1:])
+   ax2 = fig.add_subplot(gs[-1, :])
+
+   ax1.imshow(attention, vmax=100)
+   ax1.set_xticks(np.arange(len(id2token)), labels=[])
+   ax1.set_yticks(np.arange(len(id2token)), labels=[])
+   
+   ax2.imshow(energy_np, vmax=100)
+   ax2.imshow(energy_np, aspect='auto', cmap='viridis')
 
 
 
-   plt.title(f'Attention Weights Heatmap Layer {layer_idx}')
-   plt.xlabel('Key Positions')
-   plt.ylabel('Query Positions')
+   plt.tight_layout()
    plt.savefig(f'attention/layer{layer_idx}.png', dpi=300, format='png')
