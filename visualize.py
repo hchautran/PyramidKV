@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from models.cache import PiToMeCache
 from models.llama.pitomekv import convert
 from accelerate import Accelerator
 from const import  (
@@ -41,14 +42,16 @@ def cal_energy(metric:torch.Tensor, sigma:float=0.1):
 
    
 
+
 def manual_infer_with_llama_with_attention(prompt, max_length=50):
+   past_key_values = PiToMeCache()
 
    input_ids = tokenizer.encode(prompt, return_tensors='pt').to(accelerator.device)
    all_layers_attentions = [] 
 
    for _ in range(max_length):
 
-      raw_outputs = model(input_ids, output_attentions=True, return_dict=True)
+      raw_outputs = model(input_ids, output_attentions=True, return_dict=True, use_cache=True, past_key_values=past_key_values)
       output = raw_outputs.logits
       next_token_logits = output[:, -1, :]
       

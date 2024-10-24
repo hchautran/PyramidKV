@@ -11,6 +11,7 @@ from pyramidkv.mistral_model import mistral_sdpa_attn_forward_PyramidKV,mistral_
 
 from pyramidkv.llama_model import prepare_inputs_for_generation_llama
 from pyramidkv.mistral_model import prepare_inputs_for_generation_mistral
+from models.llama.pitomekv  import convert 
 
 
 def replace_llama(method):
@@ -44,9 +45,6 @@ def replace_llama(method):
         transformers.models.llama.modeling_llama.LlamaForCausalLM.prepare_inputs_for_generation = prepare_inputs_for_generation_llama
 
 
-    
-
-
 def replace_mistral(method):
     
     if method == "pyramidkv":
@@ -76,3 +74,4 @@ def replace_mistral(method):
         
     if method not in ["fullkv"]:
         transformers.models.mistral.modeling_mistral.MistralForCausalLM.prepare_inputs_for_generation = prepare_inputs_for_generation_mistral
+

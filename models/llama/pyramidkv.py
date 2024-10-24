@@ -300,6 +300,7 @@ def convert(
     print('using', 'pitome')
 
     model.__class__ =  PiToMeLlamaModel
+    print(model.past_key_values)
     model.ratio = 1.0 
     model.r=0.0
     

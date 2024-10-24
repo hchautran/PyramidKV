@@ -5,9 +5,10 @@ import argparse
 
 import numpy as np
 from tqdm import tqdm
-
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from models.cache import PiToMeCache
+from models.llama.pitomekv import convert
 
 datasets = ["narrativeqa", "qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "musique", \
             "gov_report", "qmsum", "multi_news", "trec", "triviaqa", "samsum", \

@@ -19,9 +19,10 @@ from transformers.models.llama.modeling_llama import (
     repeat_kv,
     apply_rotary_pos_emb,
 )
+from transformers.cache_utils import Cache, DynamicCache
+from ..cache import PiToMeCache
 
 logger = logging.get_logger(__name__)
-
 
 def do_nothing(x, mode=None):
     return x
@@ -296,7 +297,6 @@ class PiToMeLlamaDecoderLayer(LlamaDecoderLayer):
             cache_position=cache_position,
         )
         hidden_states = residual + hidden_states
-        print(hidden_states.shape)
 
         # Fully Connected
         residual = hidden_states
@@ -417,7 +417,7 @@ class PiToMeLlamaModel(LlamaModel):
 
 
 def convert(
-   model: LlamaModel, trace_source: bool = False, prop_attn: bool = True, sigma=0.9, output_energy_score=False, output_attn=False):
+   model:LlamaForCausalLM , trace_source: bool = False, prop_attn: bool = True, sigma=0.9, output_energy_score=False, output_attn=False):
     """
     Applies ToMe to this transformer. Afterward, set r using model.r.
 
@@ -428,7 +428,6 @@ def convert(
     the shelf. For trianing and for evaluating MAE models off the self set this to be False.
     """
     print('using', 'pitome')
-
     model.ratio = 1.0 
     model.r=0.0
     
