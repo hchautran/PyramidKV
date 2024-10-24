@@ -1,0 +1,5 @@
+LLAMA2_7B='meta-llama/Llama-2-7b-chat-hf'
+LLAMA3_8B='meta-llama/Meta-Llama-3-8B-Instruct'
+LLAMA3_1_8B='meta-llama/Llama-3.1-8B-Instruct'
+LLAMA3_2_1B='meta-llama/Llama-3.2-1B-Instruct'
+LLAMA3_2_3B='meta-llama/Llama-3.2-3B-Instruct'
