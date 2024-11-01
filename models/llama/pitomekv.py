@@ -60,7 +60,7 @@ def pitome_text(
 
         merge_idx = indices[..., :2*r]
         protected_idx = indices[..., 2*r:]
-        a_idx, b_idx = merge_idx[..., ::2], merge_idx[..., 1::2]
+        a_idx, b_idx = merge_idx[..., :r], merge_idx[..., r:]
 
         sim = sim.gather(dim=-1, index=b_idx.unsqueeze(-2).expand(B, T, r)) 
         sim = sim.gather(dim=-2, index=a_idx.unsqueeze(-1).expand(B, r, r ))
