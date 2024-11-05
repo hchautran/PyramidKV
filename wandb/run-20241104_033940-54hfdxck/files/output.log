@@ -1,3 +1,0 @@
-sequence length: 65134
-  0%|                                                  | 0/65133 [00:00<?, ?it/s]Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
-nll:  0.04, ppl:     1.04:  13%|█▌          | 8191/65133 [04:31<31:25, 30.20it/s]

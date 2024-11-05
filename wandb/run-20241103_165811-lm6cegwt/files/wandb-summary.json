@@ -1,1 +1,0 @@
-{"latency":0.04312777519226074,"_timestamp":1.7306498362247992e+09,"_step":8191,"_runtime":344.845732561,"_wandb":{"runtime":344},"overall_ppl":NaN,"ppl":NaN,"cuda_vram_allocated":16.559348583221436,"nll":NaN}
