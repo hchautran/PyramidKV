@@ -1,0 +1,16 @@
+{"time":"2024-11-03T14:51:07.436354801+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T14:51:07.436366731+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_145107-eglpm8kw/logs/debug-core.log"}
+{"time":"2024-11-03T14:51:07.542444253+01:00","level":"INFO","msg":"created new stream","id":"eglpm8kw"}
+{"time":"2024-11-03T14:51:07.542490573+01:00","level":"INFO","msg":"stream: started","id":"eglpm8kw"}
+{"time":"2024-11-03T14:51:07.542535673+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"eglpm8kw"}}
+{"time":"2024-11-03T14:51:07.542802513+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"eglpm8kw"}}
+{"time":"2024-11-03T14:51:07.542818283+01:00","level":"INFO","msg":"sender: started","stream_id":"eglpm8kw"}
+{"time":"2024-11-03T14:51:07.809956806+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T14:55:23.581634541+01:00","level":"INFO","msg":"stream: closing","id":"eglpm8kw"}
+{"time":"2024-11-03T14:55:23.581679961+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T14:55:23.582360591+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-03T14:55:25.248659797+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-03T14:55:25.442308064+01:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"eglpm8kw"}}
+{"time":"2024-11-03T14:55:25.442365374+01:00","level":"INFO","msg":"sender: closed","stream_id":"eglpm8kw"}
+{"time":"2024-11-03T14:55:25.442357294+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"eglpm8kw"}}
+{"time":"2024-11-03T14:55:25.442481824+01:00","level":"INFO","msg":"stream: closed","id":"eglpm8kw"}

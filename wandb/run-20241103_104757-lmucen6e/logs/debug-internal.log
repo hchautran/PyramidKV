@@ -1,0 +1,11 @@
+{"time":"2024-11-03T10:47:57.768704279+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T10:47:57.768727769+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_104757-lmucen6e/logs/debug-core.log"}
+{"time":"2024-11-03T10:47:57.875000282+01:00","level":"INFO","msg":"created new stream","id":"lmucen6e"}
+{"time":"2024-11-03T10:47:57.875041953+01:00","level":"INFO","msg":"stream: started","id":"lmucen6e"}
+{"time":"2024-11-03T10:47:57.875122333+01:00","level":"INFO","msg":"sender: started","stream_id":"lmucen6e"}
+{"time":"2024-11-03T10:47:57.875107483+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"lmucen6e"}}
+{"time":"2024-11-03T10:47:57.875103713+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"lmucen6e"}}
+{"time":"2024-11-03T10:47:58.184987407+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T10:48:37.203521607+01:00","level":"INFO","msg":"stream: closing","id":"lmucen6e"}
+{"time":"2024-11-03T10:48:37.203621517+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T10:48:37.204850871+01:00","level":"INFO","msg":"Stopped system monitor"}

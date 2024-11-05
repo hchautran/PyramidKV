@@ -1,0 +1,16 @@
+{"time":"2024-11-03T14:43:45.758595509+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T14:43:45.758607169+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_144345-ral7r1eu/logs/debug-core.log"}
+{"time":"2024-11-03T14:43:45.864951773+01:00","level":"INFO","msg":"created new stream","id":"ral7r1eu"}
+{"time":"2024-11-03T14:43:45.864996433+01:00","level":"INFO","msg":"stream: started","id":"ral7r1eu"}
+{"time":"2024-11-03T14:43:45.865133693+01:00","level":"INFO","msg":"sender: started","stream_id":"ral7r1eu"}
+{"time":"2024-11-03T14:43:45.865057083+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"ral7r1eu"}}
+{"time":"2024-11-03T14:43:45.865115113+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"ral7r1eu"}}
+{"time":"2024-11-03T14:43:46.100545027+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T14:44:00.833902468+01:00","level":"INFO","msg":"stream: closing","id":"ral7r1eu"}
+{"time":"2024-11-03T14:44:00.833933258+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T14:44:00.834681785+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-03T14:44:01.518238421+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-03T14:44:01.774200358+01:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"ral7r1eu"}}
+{"time":"2024-11-03T14:44:01.774284588+01:00","level":"INFO","msg":"sender: closed","stream_id":"ral7r1eu"}
+{"time":"2024-11-03T14:44:01.774272018+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"ral7r1eu"}}
+{"time":"2024-11-03T14:44:01.774427327+01:00","level":"INFO","msg":"stream: closed","id":"ral7r1eu"}

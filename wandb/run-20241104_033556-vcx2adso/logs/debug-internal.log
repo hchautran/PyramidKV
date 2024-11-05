@@ -1,0 +1,11 @@
+{"time":"2024-11-04T03:35:56.693786325+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-04T03:35:56.693807045+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241104_033556-vcx2adso/logs/debug-core.log"}
+{"time":"2024-11-04T03:35:56.801806101+01:00","level":"INFO","msg":"created new stream","id":"vcx2adso"}
+{"time":"2024-11-04T03:35:56.801848271+01:00","level":"INFO","msg":"stream: started","id":"vcx2adso"}
+{"time":"2024-11-04T03:35:56.801967922+01:00","level":"INFO","msg":"sender: started","stream_id":"vcx2adso"}
+{"time":"2024-11-04T03:35:56.801896832+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"vcx2adso"}}
+{"time":"2024-11-04T03:35:56.801946482+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"vcx2adso"}}
+{"time":"2024-11-04T03:35:57.092594646+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-04T03:36:06.957833358+01:00","level":"INFO","msg":"stream: closing","id":"vcx2adso"}
+{"time":"2024-11-04T03:36:06.957855398+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-04T03:36:06.95842341+01:00","level":"INFO","msg":"Stopped system monitor"}

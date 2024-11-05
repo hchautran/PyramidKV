@@ -1,0 +1,71 @@
+sequence length: 65134
+  0%|                                                  | 0/65133 [00:00<?, ?it/s]Starting from v4.46, the `logits` model output will have the same type as the model (except at train time, where it will always be FP32)
+nll:  0.14, ppl:     1.15:   5%|▌           | 3045/65133 [02:11<44:41, 23.16it/s]
+Traceback (most recent call last):
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/eval_ppl.py", line 186, in <module>
+    main()
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/eval_ppl.py", line 171, in main
+    compute_perplexity(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/eval_ppl.py", line 79, in compute_perplexity
+    outputs = model(input_ids, past_key_values=past_key_values, use_cache=True)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1189, in forward
+    outputs = self.model(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1000, in forward
+    layer_outputs = decoder_layer(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 729, in forward
+    hidden_states, self_attn_weights, present_key_value = self.self_attn(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 635, in forward
+    key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/caches/pitomeKV.py", line 199, in update
+    keys_to_keep = torch.cat((prune_keys, local_keys), dim=-2)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/eval_ppl.py", line 186, in <module>
+    main()
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/eval_ppl.py", line 171, in main
+    compute_perplexity(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/eval_ppl.py", line 79, in compute_perplexity
+    outputs = model(input_ids, past_key_values=past_key_values, use_cache=True)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1189, in forward
+    outputs = self.model(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 1000, in forward
+    layer_outputs = decoder_layer(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 729, in forward
+    hidden_states, self_attn_weights, present_key_value = self.self_attn(
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/miniconda3/envs/pkv/lib/python3.10/site-packages/transformers/models/llama/modeling_llama.py", line 635, in forward
+    key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
+  File "/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/caches/pitomeKV.py", line 199, in update
+    keys_to_keep = torch.cat((prune_keys, local_keys), dim=-2)
+KeyboardInterrupt

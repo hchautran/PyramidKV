@@ -1,0 +1,12 @@
+{"time":"2024-11-04T03:53:32.214516503+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-04T03:53:32.214528183+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241104_035332-94fmdseg/logs/debug-core.log"}
+{"time":"2024-11-04T03:53:32.319098146+01:00","level":"INFO","msg":"created new stream","id":"94fmdseg"}
+{"time":"2024-11-04T03:53:32.319130166+01:00","level":"INFO","msg":"stream: started","id":"94fmdseg"}
+{"time":"2024-11-04T03:53:32.319235936+01:00","level":"INFO","msg":"sender: started","stream_id":"94fmdseg"}
+{"time":"2024-11-04T03:53:32.319188576+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"94fmdseg"}}
+{"time":"2024-11-04T03:53:32.319325477+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"94fmdseg"}}
+{"time":"2024-11-04T03:53:32.561932122+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-04T03:53:56.39780021+01:00","level":"INFO","msg":"stream: closing","id":"94fmdseg"}
+{"time":"2024-11-04T03:53:56.39782471+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-04T03:53:56.398325341+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-04T03:53:57.0376361+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}

@@ -1,0 +1,16 @@
+{"time":"2024-11-03T14:16:01.386226619+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T14:16:01.386239509+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_141601-holwijfl/logs/debug-core.log"}
+{"time":"2024-11-03T14:16:01.492544021+01:00","level":"INFO","msg":"created new stream","id":"holwijfl"}
+{"time":"2024-11-03T14:16:01.492592731+01:00","level":"INFO","msg":"stream: started","id":"holwijfl"}
+{"time":"2024-11-03T14:16:01.492641781+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"holwijfl"}}
+{"time":"2024-11-03T14:16:01.492691572+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"holwijfl"}}
+{"time":"2024-11-03T14:16:01.492827843+01:00","level":"INFO","msg":"sender: started","stream_id":"holwijfl"}
+{"time":"2024-11-03T14:16:01.763025934+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T14:16:09.91790929+01:00","level":"INFO","msg":"stream: closing","id":"holwijfl"}
+{"time":"2024-11-03T14:16:09.91794369+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T14:16:09.918741636+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-03T14:16:10.775785801+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-03T14:16:11.036452539+01:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"holwijfl"}}
+{"time":"2024-11-03T14:16:11.03648723+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"holwijfl"}}
+{"time":"2024-11-03T14:16:11.0364974+01:00","level":"INFO","msg":"sender: closed","stream_id":"holwijfl"}
+{"time":"2024-11-03T14:16:11.03655573+01:00","level":"INFO","msg":"stream: closed","id":"holwijfl"}

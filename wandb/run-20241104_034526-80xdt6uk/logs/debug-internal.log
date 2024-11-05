@@ -1,0 +1,11 @@
+{"time":"2024-11-04T03:45:26.563397055+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-04T03:45:26.563418546+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241104_034526-80xdt6uk/logs/debug-core.log"}
+{"time":"2024-11-04T03:45:26.671331018+01:00","level":"INFO","msg":"created new stream","id":"80xdt6uk"}
+{"time":"2024-11-04T03:45:26.671376848+01:00","level":"INFO","msg":"stream: started","id":"80xdt6uk"}
+{"time":"2024-11-04T03:45:26.671480228+01:00","level":"INFO","msg":"sender: started","stream_id":"80xdt6uk"}
+{"time":"2024-11-04T03:45:26.671429218+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"80xdt6uk"}}
+{"time":"2024-11-04T03:45:26.671523688+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"80xdt6uk"}}
+{"time":"2024-11-04T03:45:26.929719949+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-04T03:45:37.185681902+01:00","level":"INFO","msg":"stream: closing","id":"80xdt6uk"}
+{"time":"2024-11-04T03:45:37.185700502+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-04T03:45:37.186158313+01:00","level":"INFO","msg":"Stopped system monitor"}

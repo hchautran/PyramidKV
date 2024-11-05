@@ -1,0 +1,11 @@
+{"time":"2024-11-03T10:43:21.008309279+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T10:43:21.008320889+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_104320-2voe9ymn/logs/debug-core.log"}
+{"time":"2024-11-03T10:43:21.112605638+01:00","level":"INFO","msg":"created new stream","id":"2voe9ymn"}
+{"time":"2024-11-03T10:43:21.112644448+01:00","level":"INFO","msg":"stream: started","id":"2voe9ymn"}
+{"time":"2024-11-03T10:43:21.112711778+01:00","level":"INFO","msg":"sender: started","stream_id":"2voe9ymn"}
+{"time":"2024-11-03T10:43:21.112675578+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"2voe9ymn"}}
+{"time":"2024-11-03T10:43:21.112762868+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"2voe9ymn"}}
+{"time":"2024-11-03T10:43:21.412140344+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T10:47:26.267794799+01:00","level":"INFO","msg":"stream: closing","id":"2voe9ymn"}
+{"time":"2024-11-03T10:47:26.267829309+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T10:47:26.268579412+01:00","level":"INFO","msg":"Stopped system monitor"}

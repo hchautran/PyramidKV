@@ -1,0 +1,12 @@
+{"time":"2024-11-04T04:10:05.070591064+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-04T04:10:05.070614234+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241104_041005-iwummzas/logs/debug-core.log"}
+{"time":"2024-11-04T04:10:05.178120122+01:00","level":"INFO","msg":"created new stream","id":"iwummzas"}
+{"time":"2024-11-04T04:10:05.178168862+01:00","level":"INFO","msg":"stream: started","id":"iwummzas"}
+{"time":"2024-11-04T04:10:05.178214313+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"iwummzas"}}
+{"time":"2024-11-04T04:10:05.178309393+01:00","level":"INFO","msg":"sender: started","stream_id":"iwummzas"}
+{"time":"2024-11-04T04:10:05.178269333+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"iwummzas"}}
+{"time":"2024-11-04T04:10:05.424072892+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-04T04:15:05.925917164+01:00","level":"INFO","msg":"stream: closing","id":"iwummzas"}
+{"time":"2024-11-04T04:15:05.925955584+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-04T04:15:05.926618566+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-04T04:15:06.935392569+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}

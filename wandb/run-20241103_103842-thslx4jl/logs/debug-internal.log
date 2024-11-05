@@ -1,0 +1,16 @@
+{"time":"2024-11-03T10:38:42.246535108+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T10:38:42.246561029+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_103842-thslx4jl/logs/debug-core.log"}
+{"time":"2024-11-03T10:38:42.354365059+01:00","level":"INFO","msg":"created new stream","id":"thslx4jl"}
+{"time":"2024-11-03T10:38:42.354427879+01:00","level":"INFO","msg":"stream: started","id":"thslx4jl"}
+{"time":"2024-11-03T10:38:42.354465039+01:00","level":"INFO","msg":"sender: started","stream_id":"thslx4jl"}
+{"time":"2024-11-03T10:38:42.354444049+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"thslx4jl"}}
+{"time":"2024-11-03T10:38:42.35457776+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"thslx4jl"}}
+{"time":"2024-11-03T10:38:42.920645431+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T10:43:03.45888866+01:00","level":"INFO","msg":"stream: closing","id":"thslx4jl"}
+{"time":"2024-11-03T10:43:03.45892747+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T10:43:03.459599152+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-03T10:43:05.925915839+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-03T10:43:06.168383676+01:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"thslx4jl"}}
+{"time":"2024-11-03T10:43:06.168464446+01:00","level":"INFO","msg":"sender: closed","stream_id":"thslx4jl"}
+{"time":"2024-11-03T10:43:06.168461096+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"thslx4jl"}}
+{"time":"2024-11-03T10:43:06.168593117+01:00","level":"INFO","msg":"stream: closed","id":"thslx4jl"}

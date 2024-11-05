@@ -1,0 +1,12 @@
+{"time":"2024-11-03T10:59:37.855595535+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T10:59:37.855612135+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_105937-fa3mrt8h/logs/debug-core.log"}
+{"time":"2024-11-03T10:59:37.961110915+01:00","level":"INFO","msg":"created new stream","id":"fa3mrt8h"}
+{"time":"2024-11-03T10:59:37.961148585+01:00","level":"INFO","msg":"stream: started","id":"fa3mrt8h"}
+{"time":"2024-11-03T10:59:37.961217525+01:00","level":"INFO","msg":"sender: started","stream_id":"fa3mrt8h"}
+{"time":"2024-11-03T10:59:37.961186615+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"fa3mrt8h"}}
+{"time":"2024-11-03T10:59:37.961194165+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"fa3mrt8h"}}
+{"time":"2024-11-03T10:59:38.293132273+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T11:00:09.653594752+01:00","level":"INFO","msg":"stream: closing","id":"fa3mrt8h"}
+{"time":"2024-11-03T11:00:09.653614162+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T11:00:09.654183143+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-03T11:00:10.418873324+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}

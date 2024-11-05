@@ -1,0 +1,16 @@
+{"time":"2024-11-03T10:48:49.379179077+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T10:48:49.379200467+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_104849-dzi9t22i/logs/debug-core.log"}
+{"time":"2024-11-03T10:48:49.486686824+01:00","level":"INFO","msg":"created new stream","id":"dzi9t22i"}
+{"time":"2024-11-03T10:48:49.486721624+01:00","level":"INFO","msg":"stream: started","id":"dzi9t22i"}
+{"time":"2024-11-03T10:48:49.486772704+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"dzi9t22i"}}
+{"time":"2024-11-03T10:48:49.486826945+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"dzi9t22i"}}
+{"time":"2024-11-03T10:48:49.486879165+01:00","level":"INFO","msg":"sender: started","stream_id":"dzi9t22i"}
+{"time":"2024-11-03T10:48:49.830710589+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T10:48:52.541909057+01:00","level":"INFO","msg":"stream: closing","id":"dzi9t22i"}
+{"time":"2024-11-03T10:48:52.541942527+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T10:48:52.54264126+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-03T10:48:54.788217184+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-03T10:48:55.155725218+01:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"dzi9t22i"}}
+{"time":"2024-11-03T10:48:55.155798758+01:00","level":"INFO","msg":"sender: closed","stream_id":"dzi9t22i"}
+{"time":"2024-11-03T10:48:55.155790968+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"dzi9t22i"}}
+{"time":"2024-11-03T10:48:55.155955349+01:00","level":"INFO","msg":"stream: closed","id":"dzi9t22i"}

@@ -1,0 +1,16 @@
+{"time":"2024-11-04T05:13:25.93264661+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-04T05:13:25.93266641+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241104_051325-akz9ldhm/logs/debug-core.log"}
+{"time":"2024-11-04T05:13:26.039139971+01:00","level":"INFO","msg":"created new stream","id":"akz9ldhm"}
+{"time":"2024-11-04T05:13:26.039170031+01:00","level":"INFO","msg":"stream: started","id":"akz9ldhm"}
+{"time":"2024-11-04T05:13:26.039314711+01:00","level":"INFO","msg":"sender: started","stream_id":"akz9ldhm"}
+{"time":"2024-11-04T05:13:26.039267781+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"akz9ldhm"}}
+{"time":"2024-11-04T05:13:26.039232271+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"akz9ldhm"}}
+{"time":"2024-11-04T05:13:26.276816663+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-04T05:18:20.917130977+01:00","level":"INFO","msg":"stream: closing","id":"akz9ldhm"}
+{"time":"2024-11-04T05:18:20.917162447+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-04T05:18:20.918086519+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-11-04T05:18:21.790050311+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-11-04T05:18:22.014115352+01:00","level":"INFO","msg":"handler: closed","stream_id":{"value":"akz9ldhm"}}
+{"time":"2024-11-04T05:18:22.014199152+01:00","level":"INFO","msg":"sender: closed","stream_id":"akz9ldhm"}
+{"time":"2024-11-04T05:18:22.014188592+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"akz9ldhm"}}
+{"time":"2024-11-04T05:18:22.014354492+01:00","level":"INFO","msg":"stream: closed","id":"akz9ldhm"}

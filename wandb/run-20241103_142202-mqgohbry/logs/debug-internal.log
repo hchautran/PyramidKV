@@ -1,0 +1,11 @@
+{"time":"2024-11-03T14:22:02.624511836+01:00","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-11-03T14:22:02.624524516+01:00","level":"INFO","msg":"created symlink","path":"/media/caduser/da936c0b-edd7-470e-ab92-9b972b220fe7/chau/PyramidKV/wandb/run-20241103_142202-mqgohbry/logs/debug-core.log"}
+{"time":"2024-11-03T14:22:02.730208967+01:00","level":"INFO","msg":"created new stream","id":"mqgohbry"}
+{"time":"2024-11-03T14:22:02.730250477+01:00","level":"INFO","msg":"stream: started","id":"mqgohbry"}
+{"time":"2024-11-03T14:22:02.730297338+01:00","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"mqgohbry"}}
+{"time":"2024-11-03T14:22:02.730344248+01:00","level":"INFO","msg":"handler: started","stream_id":{"value":"mqgohbry"}}
+{"time":"2024-11-03T14:22:02.730389578+01:00","level":"INFO","msg":"sender: started","stream_id":"mqgohbry"}
+{"time":"2024-11-03T14:22:02.990688565+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-11-03T14:23:34.133930455+01:00","level":"INFO","msg":"stream: closing","id":"mqgohbry"}
+{"time":"2024-11-03T14:23:34.133976375+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-11-03T14:23:34.134701739+01:00","level":"INFO","msg":"Stopped system monitor"}
