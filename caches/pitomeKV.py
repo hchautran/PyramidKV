@@ -194,6 +194,7 @@ class PiToMeCache(Cache):
          sink_keys = self.key_cache[layer_idx][:, :, : self.num_sink_tokens]
          sink_values = self.value_cache[layer_idx][:, :, : self.num_sink_tokens]
 
+         if self.indices is not None: 
             keys = self.key_cache[layer_idx][
                :, :, self.num_sink_tokens:
             ]
