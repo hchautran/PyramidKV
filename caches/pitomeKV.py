@@ -41,7 +41,7 @@ class PiToMeCache(Cache):
       super().__init__()
       self.key_cache: List[torch.Tensor] = []
       self.value_cache: List[torch.Tensor] = []
-      self.window_length = window_length
+      self.window_length = window_length 
       self.num_sink_tokens = num_sink_tokens
       self.cos_sin_rerotation_cache = {}
       self._cos_cache = None
@@ -51,7 +51,7 @@ class PiToMeCache(Cache):
       self.indices = None
       self.local_size =  128 
       self.prune_size = window_length - self.local_size
-      self.sizes =  None  
+      self.sizes =  [] 
       self.use_merge = use_merge 
 
    @staticmethod
@@ -108,11 +108,7 @@ class PiToMeCache(Cache):
       mask[indices] = False
       x = x[:, : , mask]
       return x
-   
-   def merge(self, x:torch.Tensor, x_src:torch.Tensor, x_dst:torch.Tensor, dst_idx:torch.Tensor, mode:str='mean'):
-      B, T, C = x.shape
-      x_dst = x_dst.scatter_reduce(-2, dst_idx.unsqueeze(2).expand(B, indices.shape[-1], C), x_src, reduce=mode)
-      return x
+
 
       
    def merge_wavg(self, x:torch.Tensor, dst_idx:torch.Tensor, size:torch.Tensor=None):
@@ -194,57 +190,24 @@ class PiToMeCache(Cache):
          sink_keys = self.key_cache[layer_idx][:, :, : self.num_sink_tokens]
          sink_values = self.value_cache[layer_idx][:, :, : self.num_sink_tokens]
 
-         if self.indices is not None: 
-            keys = self.key_cache[layer_idx][
-               :, :, self.num_sink_tokens:
-            ]
+         keys = self.key_cache[layer_idx][
+            :, :, self.num_sink_tokens:
+         ]
 
-            values = self.value_cache[layer_idx][
-               :, :, self.num_sink_tokens:
-            ]
+         values = self.value_cache[layer_idx][
+            :, :, self.num_sink_tokens:
+         ]
 
-            local_keys= keys[:, :, -self.local_size:]
-            local_values = values[:, :, -self.local_size:]
-            remain_keys= keys[:, :, :-self.local_size]
-            remain_values = values[:, :, :-self.local_size:]
-
-
-            if not self.use_merge:
-               remain_keys = self.prune(remain_keys, indices=self.indices)
-               remain_values = self.prune(remain_values, indices=self.indices) 
-            else:
-               remain_keys = self.merge(remain_keys, indices=self.indices)
-               remain_values = self.merge(remain_values, indices=self.indices) 
-
-            keys_to_keep = torch.cat((remain_keys, local_keys), dim=-2)
-            values_to_keep = torch.cat((remain_values, local_values), dim=-2)
-
-            energy, _ = self._cal_energy(remain_keys.mean(1), sigma=0.1)
-            if self.energy_scores is None:
-               self.energy_scores = energy 
-            else:
-               self.energy_scores = self.energy_scores + energy
-            
-            if layer_idx == len(self.key_cache) - 1: 
-               self.indices = torch.topk(self.energy_scores.mean(-1), k=key_states.shape[-2], largest=True).indices 
-
-         else:
-            keys_to_keep = self.key_cache[layer_idx][
-               :, :, -self.window_length + self.num_sink_tokens + key_states.shape[-2] :
-            ]
-            values_to_keep = self.value_cache[layer_idx][
-               :, :, -self.window_length + self.num_sink_tokens + value_states.shape[-2] :
-            ]
-
-            if layer_idx == len(self.key_cache) - 1: 
-               self.indices = 0 
-
+         local_keys= keys[:, :, -self.local_size:]
+         local_values = values[:, :, -self.local_size:]
+         remain_keys= keys[:, :, :-self.local_size]
+         remain_values = values[:, :, :-self.local_size:]
 
 
          # On RoPE models, we need to recompute the Key rotation as the tokens are shifted
          if using_rope:
                rerotation_cos, rerotation_sin = self._get_rerotation_cos_sin(
-                  key_states, self._cos_cache[: self.window_length+2], self._sin_cache[: self.window_length+2]
+                  key_states, self._cos_cache[: self.window_length], self._sin_cache[: self.window_length]
                )
                if partial_rotation_size is not None:
                   keys_to_keep, keys_pass = (
@@ -256,6 +219,12 @@ class PiToMeCache(Cache):
                if partial_rotation_size is not None:
                   keys_to_keep = torch.cat((keys_to_keep, keys_pass), dim=-1)
 
+         energy, _ = self._cal_energy(remain_keys.mean(1), sigma=0.1)
+         indices = torch.topk(energy, k=key_states.shape[-2], largest=True).indices 
+         remain_keys = self.prune(remain_keys, indices=indices)
+         remain_values = self.prune(remain_values, indices=indices) 
+         keys_to_keep = torch.cat((remain_keys, local_keys), dim=-2)
+         values_to_keep = torch.cat((remain_values, local_values), dim=-2)
 
          # Concatenate sink tokens, shifted & rotated tokens (if needed), and new tokens
          self.key_cache[layer_idx] = torch.cat([sink_keys, keys_to_keep, key_states], dim=-2)

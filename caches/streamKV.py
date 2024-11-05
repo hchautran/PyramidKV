@@ -161,6 +161,7 @@ class SinkCache(Cache):
          keys_to_keep = self.key_cache[layer_idx][
                :, :, -self.window_length + self.num_sink_tokens + key_states.shape[-2] :
          ]
+         print(keys_to_keep.shape)
 
          # On RoPE models, we need to recompute the Key rotation as the tokens are shifted
          if using_rope:

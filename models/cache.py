@@ -1,5 +1,5 @@
 
-from transformers.cache_utils import Cache, DynamicCache, deprecate_kwarg
+from transformers.cache_utils import Cache, DynamicCache
 from typing import List, Tuple, Optional, Dict, Any
 import torch
 
@@ -29,7 +29,6 @@ class PiToMeCache(DynamicCache):
         ```
     """
 
-    @deprecate_kwarg("num_hidden_layers", version="4.47.0")
     def __init__(self, num_hidden_layers: Optional[int] = None, max_len=1024,  attention_sink=4) -> None:
         super().__init__()
         self._seen_tokens = 0  # Used in `generate` to keep tally of how many tokens the cache has seen
@@ -102,7 +101,6 @@ class PiToMeCache(DynamicCache):
 
 
     @classmethod
-    @deprecate_kwarg("num_hidden_layers", version="4.47.0")
     def from_legacy_cache(
         cls, past_key_values: Optional[Tuple[Tuple[torch.FloatTensor]]] = None, num_hidden_layers: int = None
     ) -> "PiToMeCache":
@@ -116,7 +114,6 @@ class PiToMeCache(DynamicCache):
         return cache
 
 
-    @deprecate_kwarg("num_hidden_layers", version="4.47.0")
     def batch_split(
         self, full_batch_size: int, split_size: int, num_hidden_layers: int = None
     ) -> List["PiToMeCache"]:
@@ -132,7 +129,6 @@ class PiToMeCache(DynamicCache):
         return out
 
     @classmethod
-    @deprecate_kwarg("num_hidden_layers", version="4.47.0")
     def from_batch_splits(cls, splits: List["PiToMeCache"], num_hidden_layers: int = None) -> "PiToMeCache":
         """This is the opposite of the above `batch_split()` method. This will be used by `stack_model_outputs` in
         `generation.utils`"""
