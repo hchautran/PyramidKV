@@ -13,7 +13,13 @@ from transformers.modeling_outputs import BaseModelOutputWithPast
 from transformers.utils import (
     logging,
 )
-from pyramidkv.pyramidkv_utils import init_pyramidkv,init_snapkv,init_H2O,init_StreamingLLM
+from pyramidkv.pyramidkv_utils import (
+    init_pyramidkv,
+    init_snapkv,
+    init_H2O,
+    init_StreamingLLM,
+    init_pitomekv   
+)
 import math
 
 logger = logging.get_logger(__name__)
@@ -316,7 +322,6 @@ def llama_flash_attn2_forward_PyramidKV(
             past_key_value.update(key_states_compress, value_states_compress, self.layer_idx, cache_kwargs)
         else:
             self.kv_seq_len += q_len
-            print(q_len)
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
 
         # print(f"after self.key_cache[layer_idx] {past_key_value.key_cache[self.layer_idx].device}")
@@ -1323,8 +1328,6 @@ def llama_flash_attn2_forward_SnapKV(
     if past_key_value is not None:
         cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
         # key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-        # print('kv_seq_len:', kv_seq_len)
-        # print('key_states.shape:', key_states.shape)
         if key_states.shape[-2] == kv_seq_len: # [SnapKV] add kv_cluster
             self.kv_seq_len = kv_seq_len # [SnapKV] register kv_seq_len
             key_states_compress, value_states_compress = self.kv_cluster.update_kv(key_states, query_states, value_states, attention_mask, self.num_key_value_groups)
@@ -1461,7 +1464,7 @@ def llama_attn_forward_PiToMeKV(
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     bsz, q_len, _ = hidden_states.size()
 
-    init_pyramidkv(self, num_hidden_layers=self.config.num_hidden_layers)
+    init_pitomekv(self, num_hidden_layers=self.config.num_hidden_layers)
 
     if self.config.pretraining_tp > 1:
         key_value_slicing = (self.num_key_value_heads * self.head_dim) // self.config.pretraining_tp
@@ -1559,6 +1562,7 @@ def llama_attn_forward_PiToMeKV(
     return attn_output, attn_weights, past_key_value
 
 
+
 def llama_sdpa_attn_forward_PiToMeKV(
     self,
     hidden_states: torch.Tensor,
@@ -1585,7 +1589,7 @@ def llama_sdpa_attn_forward_PiToMeKV(
             cache_position=cache_position,
         )
 
-    init_pyramidkv(self, num_hidden_layers=self.config.num_hidden_layers)
+    init_pitomekv(self, num_hidden_layers=self.config.num_hidden_layers)
 
     bsz, q_len, _ = hidden_states.size()
 
@@ -1625,7 +1629,13 @@ def llama_sdpa_attn_forward_PiToMeKV(
         cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
         if key_states.shape[-2] == kv_seq_len:
             self.kv_seq_len = kv_seq_len
-            key_states_compress, value_states_compress = self.kv_cluster.update_kv(key_states, query_states, value_states, attention_mask, self.num_key_value_groups)
+            key_states_compress, value_states_compress = self.kv_cluster.update_kv(
+                key_states, 
+                query_states, 
+                value_states, 
+                attention_mask, 
+                self.num_key_value_groups
+            )
             past_key_value.update(key_states_compress, value_states_compress, self.layer_idx, cache_kwargs)
         else:
             self.kv_seq_len += q_len
@@ -1676,7 +1686,7 @@ def llama_flash_attn2_forward_PiToMeKV(
     **kwargs,
 ) -> Tuple[torch.Tensor, Optional[torch.Tensor], Optional[Tuple[torch.Tensor]]]:
     
-    init_pyramidkv(self, num_hidden_layers=self.config.num_hidden_layers)
+    init_pitomekv(self, num_hidden_layers=self.config.num_hidden_layers)
     # LlamaFlashAttention2 attention does not support output_attentions
     if "padding_mask" in kwargs:
         warnings.warn(
@@ -1725,30 +1735,15 @@ def llama_flash_attn2_forward_PiToMeKV(
     value_states = repeat_kv(value_states, self.num_key_value_groups)
 
     if past_key_value is not None:
-        cache_kwargs = {"sin": sin, "cos": cos}  # Specific to RoPE models
-        # key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-        # print('kv_seq_len:', kv_seq_len)
-        # print('key_states.shape:', key_states.shape)
-        
-        # print(f"self.layer_idx {self.layer_idx}")
-        # print(f"key_states {key_states.device}")
-        # print(f"value_states {value_states.device}")
-        
-        if self.layer_idx <= 3:
-            for index in range(len(past_key_value.key_cache)):
-                print(f"before self.key_cache[{self.layer_idx}] {key_states.shape}", '='*100)
+        cache_kwargs = {"sin": sin, "cos": cos} 
         if key_states.shape[-2] == kv_seq_len: 
             self.kv_seq_len = kv_seq_len 
-            key_states_compress, value_states_compress = self.kv_cluster.update_kv(key_states, query_states, value_states, attention_mask, self.num_key_value_groups)
-            past_key_value.update(key_states_compress, value_states_compress, self.layer_idx, cache_kwargs)
-            if self.layer_idx  <= 2:
-                print(f"after self.key_cache[{self.layer_idx}] {past_key_value.key_cache[self.layer_idx].shape}", '-'*100)
+            key_states, value_states = self.kv_cluster.update_kv(key_states, query_states, value_states, attention_mask, self.num_key_value_groups)
+            past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
         else:
             self.kv_seq_len += q_len
             key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
-            if self.layer_idx  <= 2:
-                print(f"after self.key_cache[{self.layer_idx}] {past_key_value.key_cache[self.layer_idx].shape}")
-    
+            print(past_key_value[0][0].shape)
 
     # TODO: These transpose are quite inefficient but Flash Attention requires the layout [batch_size, sequence_length, num_heads, head_dim]. We would need to refactor the KV cache
     # to be able to avoid many of these transpose/reshape/view.

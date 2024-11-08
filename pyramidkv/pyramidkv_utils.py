@@ -26,10 +26,8 @@ class PyramidKVCluster():
         
         self.layer_idx = layer_idx
         self.num_hidden_layers = num_hidden_layers
-        
         self.steps = -1
         self.beta = beta
-        
         self.window_size = window_size
         self.max_capacity_prompt = max_capacity_prompt
         assert self.max_capacity_prompt - self.window_size > 0
@@ -86,10 +84,12 @@ class PyramidKVCluster():
                 raise ValueError('Pooling method not supported')
             indices = attn_cache.topk(self.max_capacity_prompt - self.window_size, dim=-1).indices
             indices = indices.unsqueeze(-1).expand(-1, -1, -1, head_dim)
+            
             k_past_compress = key_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
             v_past_compress = value_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
             k_cur = key_states[:, :, -self.window_size:, :]
             v_cur = value_states[:, :, -self.window_size:, :]
+
             key_states = torch.cat([k_past_compress, k_cur], dim = 2)
             value_states = torch.cat([v_past_compress, v_cur], dim = 2)
             return key_states, value_states
@@ -186,12 +186,14 @@ class PyramidKVCluster():
                 attn_cache = F.max_pool1d(attn_weights_sum, kernel_size = self.kernel_size, padding=self.kernel_size//2, stride=1)
             else:
                 raise ValueError('Pooling method not supported')
+
             indices = attn_cache.topk(self.max_capacity_prompt - self.window_size, dim=-1).indices
             indices = indices.unsqueeze(-1).expand(-1, -1, -1, head_dim)
             k_past_compress = key_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
             v_past_compress = value_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
             k_cur = key_states[:, :, -self.window_size:, :]
             v_cur = value_states[:, :, -self.window_size:, :]
+
             key_states = torch.cat([k_past_compress, k_cur], dim = 2)
             value_states = torch.cat([v_past_compress, v_cur], dim = 2)
             return key_states, value_states
@@ -355,8 +357,66 @@ class PiToMeKVCluster():
         self.pooling = pooling
 
         
+    def _cal_energy(self, metric:torch.Tensor, sigma:float=0.1):
+        metric = F.normalize(metric, p=2, dim=-1) 
+        sim = metric@metric.transpose(-1,-2)
+        energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
+        return energy_score
 
-    def update_kv(self, key_states, query_states, value_states, attention_mask, num_key_value_groups):
+        
+    def pitome_text(
+        self,
+        metric: torch.Tensor, 
+        ratio:float=1.0,
+        class_token: bool = False,
+    ):
+        with torch.no_grad():
+            if class_token:
+                metric=metric[:,1:,:]
+
+            if len(metric.shape) == 2:
+                metric = metric[None,...]
+            B,T,C = metric.shape
+            r = math.floor(T- T*ratio)
+            metric = F.normalize(metric, p=2, dim=-1) 
+            batch_idx = torch.arange(B).unsqueeze_(1).to(metric.device)
+            # To calculate energy scores for text tokens, in this implementation, we use the Gaussian kernel. This shows better performance than the equation (4) in the paper 
+            sim = metric@metric.transpose(-1,-2)
+            # sim = F.elu((metric@metric.transpose(-1,-2) - margin)/0.01, alpha=alpha)
+            sigma = 0.1 
+            energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi))) 
+            indices =  torch.argsort(energy_score , descending=True)
+            merge_idx = indices[..., :2*r]
+            protected_idx = indices[..., 2*r:]
+            # Also instead of using odd and even indices, we choose to split based on higher and lower energy sets which show significantly better performance 
+            a_idx, b_idx = merge_idx[..., :r], merge_idx[..., r:]
+            scores = sim.gather(dim=-1, index=b_idx.unsqueeze(-2).expand(B, T, r)) 
+            scores = scores.gather(dim=-2, index=a_idx.unsqueeze(-1).expand(B, r, r ))
+            _, dst_idx = scores.max(dim=-1) 
+
+        def merge(x: torch.Tensor, mode="mean") -> torch.Tensor:
+            if class_token:
+                x_cls=x[:,0,:].unsqueeze(1)
+                x=x[:,1:,:]
+            else:
+                x_cls = None
+
+            B, H, T, C = x.shape
+            protected = x.gather(dim=-2, index=protected_idx.unsqueeze(1).unsqueeze(-1).expand(B, H, -1, C))
+            src = x.gather(dim=-2, index=a_idx.unsqueeze(1).unsqueeze(-1).expand(B, H, -1, C))
+            dst = x.gather(dim=-2, index=b_idx.unsqueeze(1).unsqueeze(-1).expand(B, H, -1, C))
+            dst = dst.scatter_reduce(-2, dst_idx.unsqueeze(1).unsqueeze(-1).expand(B, H, r, C), src, reduce=mode)
+
+            if class_token:
+                return torch.cat([x_cls, protected, dst], dim=2)
+            return torch.cat([protected, dst], dim=2)
+
+        return merge
+
+
+        
+
+    def update_kv(self, key_states:torch.Tensor, query_states:torch.Tensor, value_states:torch.Tensor, attention_mask, num_key_value_groups):
         
         # check if prefix phase
         assert key_states.shape[-2] == query_states.shape[-2]
@@ -376,62 +436,33 @@ class PiToMeKVCluster():
         steps = (max_num - min_num) // (self.num_hidden_layers - 1)
         max_capacity_prompt = max_num - self.layer_idx * steps
         
-        print(f"PyramidKV max_capacity_prompt {max_capacity_prompt}")
         if q_len < self.max_capacity_prompt:
             return key_states, value_states
-        elif q_len < (self.max_capacity_prompt - self.window_size) * 2:
-            attn_weights = torch.matmul(query_states[..., -self.window_size:, :], key_states.transpose(2, 3)) / math.sqrt(head_dim)
-            mask = torch.full((self.window_size, self.window_size), torch.finfo(attn_weights.dtype).min, device=attn_weights.device)
-            mask_cond = torch.arange(mask.size(-1), device=attn_weights.device)
-            mask.masked_fill_(mask_cond < (mask_cond + 1).view(mask.size(-1), 1), 0)
-            mask = mask.to(attn_weights.device)
-            attention_mask = mask[None, None, :, :]
-
-            attn_weights[:, :, -self.window_size:, -self.window_size:] += attention_mask
-
-            attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-            attn_weights_sum = attn_weights[:, :, -self.window_size:, : -self.window_size].sum(dim = -2)
-            if self.pooling == 'avgpool':
-                attn_cache = F.avg_pool1d(attn_weights_sum, kernel_size = self.kernel_size, padding=self.kernel_size//2, stride=1)
-            elif self.pooling == 'maxpool':
-                attn_cache = F.max_pool1d(attn_weights_sum, kernel_size = self.kernel_size, padding=self.kernel_size//2, stride=1)
-            else:
-                raise ValueError('Pooling method not supported')
-            indices = attn_cache.topk(self.max_capacity_prompt - self.window_size, dim=-1).indices
-            indices = indices.unsqueeze(-1).expand(-1, -1, -1, head_dim)
-            k_past_compress = key_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
-            v_past_compress = value_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
-            k_cur = key_states[:, :, -self.window_size:, :]
-            v_cur = value_states[:, :, -self.window_size:, :]
-            key_states = torch.cat([k_past_compress, k_cur], dim = 2)
-            value_states = torch.cat([v_past_compress, v_cur], dim = 2)
-            return key_states, value_states
+    
         else:
-            attn_weights = torch.matmul(query_states[..., -self.window_size:, :], key_states.transpose(2, 3)) / math.sqrt(head_dim)
-            mask = torch.full((self.window_size, self.window_size), torch.finfo(attn_weights.dtype).min, device=attn_weights.device)
-            mask_cond = torch.arange(mask.size(-1), device=attn_weights.device)
-            mask.masked_fill_(mask_cond < (mask_cond + 1).view(mask.size(-1), 1), 0)
-            mask = mask.to(attn_weights.device)
-            attention_mask = mask[None, None, :, :]
+            # breakpoint()
+            sink_size = 10 
+            k_sink = key_states[:, :, :sink_size, :] 
+            v_sink = value_states[:, :, :sink_size, :]
+            key =  key_states[:, :, sink_size:, :]
+            value =  value_states[:, :, sink_size:, :]
 
-            attn_weights[:, :, -self.window_size:, -self.window_size:] += attention_mask
+            k_past_compress = key[:, :, :-self.window_size, :]
+            v_past_compress = value[:, :, :-self.window_size, :]
 
-            attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
-            attn_weights_sum = attn_weights[:, :, -self.window_size:, : -self.window_size].sum(dim = -2)
-            if self.pooling == 'avgpool':
-                attn_cache = F.avg_pool1d(attn_weights_sum, kernel_size = self.kernel_size, padding=self.kernel_size//2, stride=1)
-            elif self.pooling == 'maxpool':
-                attn_cache = F.max_pool1d(attn_weights_sum, kernel_size = self.kernel_size, padding=self.kernel_size//2, stride=1)
-            else:
-                raise ValueError('Pooling method not supported')
-            indices = attn_cache.topk(max_capacity_prompt, dim=-1).indices
-            indices = indices.unsqueeze(-1).expand(-1, -1, -1, head_dim)
-            k_past_compress = key_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
-            v_past_compress = value_states[:, :, :-self.window_size, :].gather(dim = 2, index = indices)
-            k_cur = key_states[:, :, -self.window_size:, :]
-            v_cur = value_states[:, :, -self.window_size:, :]
-            key_states = torch.cat([k_past_compress, k_cur], dim = 2)
-            value_states = torch.cat([v_past_compress, v_cur], dim = 2)
+            k_cur = key[:, :, -self.window_size:, :]
+            v_cur = value[:, :, -self.window_size:, :]
+
+            merge = self.pitome_text(k_past_compress.mean(1), ratio=0.505, class_token=False)
+
+
+
+            B, H, L, D = k_past_compress.shape 
+
+            k = merge(k_past_compress)
+            v = merge(v_past_compress) 
+            key_states = torch.cat([k_sink, k, k_cur], dim = 2)
+            value_states = torch.cat([v_sink, v, v_cur], dim = 2)
             return key_states, value_states
 
 

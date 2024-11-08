@@ -10,9 +10,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from models.cache import PiToMeCache
 from models.llama.pitomekv import convert
 
-datasets = ["narrativeqa", "qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "musique", \
-            "gov_report", "qmsum", "multi_news", "trec", "triviaqa", "samsum", \
-            "passage_count", "passage_retrieval_en", "lcc", "repobench-p"]
+# datasets = ["narrativeqa", "qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "musique", \
+            # "gov_report", "qmsum", "multi_news", "trec", "triviaqa", "samsum", \
+            # "passage_count", "passage_retrieval_en", "lcc", "repobench-p"]
+
+datasets = ['narrativeqa']
 
 dataset2maxlen = {
     "narrativeqa": 128,
@@ -350,15 +352,12 @@ if __name__ == "__main__":
     )
     
 
-        
-
     tokenizer.padding_side = "left"
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
     
 
-        
     model.eval()
     
     save_dir = args.save_dir
