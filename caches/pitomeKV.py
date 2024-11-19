@@ -96,7 +96,7 @@ class PiToMeCache(Cache):
          return 0
       return self.key_cache[layer_idx].shape[-2]
    
-   def _cal_energy(self, metric:torch.Tensor, sigma:float=0.2):
+   def _cal_energy(self, metric:torch.Tensor, sigma:float=4.0):
       metric = F.normalize(metric, p=2, dim=-1) 
       sim = metric@metric.transpose(-1,-2)
       energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
@@ -219,7 +219,7 @@ class PiToMeCache(Cache):
                if partial_rotation_size is not None:
                   keys_to_keep = torch.cat((keys_to_keep, keys_pass), dim=-1)
 
-         energy, _ = self._cal_energy(remain_keys.mean(1), sigma=0.1)
+         energy, _ = self._cal_energy(remain_keys.mean(1), sigma=4.0)
          indices = torch.topk(energy, k=key_states.shape[-2], largest=True).indices 
          remain_keys = self.prune(remain_keys, indices=indices)
          remain_values = self.prune(remain_values, indices=indices) 

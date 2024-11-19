@@ -8,7 +8,9 @@ from models.cache import PiToMeCache
 from models.llama.pitomekv import convert
 from datasets import load_dataset
 import numpy as np
+from tqdm.auto import tqdm
 import pandas as pd
+import wandb
 from const import  (
    LLAMA2_7B,
    LLAMA3_8B,
@@ -91,9 +93,9 @@ def cal_energy(metric:torch.Tensor, sigma:float=0.1):
    metric = F.normalize(metric, p=2, dim=-1) 
    sim = metric@metric.transpose(-1,-2)
    energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
-   return energy_score
+   # energy_score = F.elu(sim - sigma).mean(-1)
 
-   
+   return energy_score
 
 
 def manual_infer_with_llama_with_attention(prompt, max_length=50):
@@ -124,8 +126,26 @@ def manual_infer_with_llama_with_attention(prompt, max_length=50):
 
 
 
+def plot_attention_energy_map(attention, energy):
+      fig = plt.figure(figsize=(9, 10))
+      gs = gridspec.GridSpec(9, 10)
+
+      ax1 = fig.add_subplot(gs[:-1, :])
+      ax2 = fig.add_subplot(gs[-1, :], sharex=ax1)
+
+      ax1.imshow(attention, vmax=100)
+      # ax2.imshow(attention_mean.reshape(1, -1)*100)
+      ax2.imshow(energy.mean(1).reshape(1, -1), cmap='inferno', aspect='auto')
+      # ax3.imshow(energy_value.reshape(1, -1), cmap='inferno', aspect='auto')
+      plt.setp(ax1.get_xticklabels(), visible=False)
+
+      plt.tight_layout()
+      plt.savefig(f'{directory}/layer{layer_idx}.png', dpi=300, format='png')
+      plt.show()
+
 
 if __name__ == '__main__':
+   model_ckt = LLAMA3_8B 
    model_ckt = LLAMA2_7B 
    tokenizer = AutoTokenizer.from_pretrained(model_ckt)
    model = AutoModelForCausalLM.from_pretrained(
@@ -137,79 +157,97 @@ if __name__ == '__main__':
    )
    dataset = 'multi_news'
    longbench = load_dataset('THUDM/LongBench', dataset, split='test')
-   longbench_filtered = longbench.filter(lambda x: x['length'] < 600)
+   longbench_filtered = longbench.filter(lambda x: x['length'] < 1024)
 
    model.config.output_attention = True
    directory = f"attention/{model_ckt.split('/')[-1]}"
    if not os.path.exists(directory):
       os.makedirs(directory)
 
-   example = longbench_filtered[0]
    template = model2prompt[dataset]
-   prompt = template.format(**example)
-   prompt = build_chat(prompt)
-   correlations_all = []
-
-   results, input_ids, all_layers_attentions, past_key_values = manual_infer_with_llama_with_attention(prompt)
-   for sample in longbench_filtered:
-      correlations = []
-      for layer_idx, attentions in enumerate(all_layers_attentions):
-         attention = attentions * 10000
-
-         attention_average = torch.mean(attention, dim=1)
-
-         attention_average = attention_average[0]
-
-         attention = attention_average
-
-         id2token = []
-         for id in input_ids:
-            id2token.append(tokenizer.decode(id.item()))
-
-         id2token = id2token[0:]
-         indices = list(range(len(id2token)))
-
-         # attention = attention.cpu().detach().numpy()a
-         # breakpoint()
-         energy_key = cal_energy(past_key_values[layer_idx][0], sigma=2.0).cpu().detach().numpy()
-         # energy_value = cal_energy(past_key_values[layer_idx][1].mean(1), sigma=0.1).cpu().detach().numpy()
-
-         size = torch.tril(torch.ones_like(attention))
-         attention_mean = (F.softmax(attention, dim=-1).sum(0) / size.sum(0)).cpu().detach().numpy()
-
-         # breakpoint()
-
-         data = {
-            'attention': attention_mean,
-            'energy': energy_key.mean(1).squeeze(),
-         } 
-         # breakpoint()
-         df = pd.DataFrame(data)
-         correlation = df['attention'].corr(df['energy'])
-         print('correlation:', correlation)
-         correlations.append(correlation)
-
-
-         fig = plt.figure(figsize=(9, 10))
-         gs = gridspec.GridSpec(9, 10)
-
-         ax1 = fig.add_subplot(gs[:-1, :])
-         ax2 = fig.add_subplot(gs[-1, :], sharex=ax1)
-
-         ax1.imshow(attention, vmax=100)
-         # ax2.imshow(attention_mean.reshape(1, -1)*100)
-         ax2.imshow(energy_key.mean(1).reshape(1, -1), cmap='inferno', aspect='auto')
-         # ax3.imshow(energy_value.reshape(1, -1), cmap='inferno', aspect='auto')
-         plt.setp(ax1.get_xticklabels(), visible=False)
-         
-
-         plt.tight_layout()
-         plt.savefig(f'{directory}/layer{layer_idx}.png', dpi=300, format='png')
-         plt.show()
-      correlations_all.append(correlations)
    
-   correlation_all =  torch.tensor(correlations_all).mean(0)
-   print(correlation_all)
+   for sample in tqdm(longbench_filtered):
+      prompt = template.format(**sample)
+      prompt = build_chat(prompt)
+      results, input_ids, all_layers_attentions, past_key_values = manual_infer_with_llama_with_attention(prompt)
+      correlation_all = []
+      x = torch.arange(0, len(all_layers_attentions)).cpu().detach().numpy()
+
+      attention_sum = None 
+      for layer_idx, attentions in enumerate(all_layers_attentions):
+         attention = attentions 
+         # breakpoint()
+         attention_average = torch.mean(attention, dim=1)[0]
+         size = torch.tril(torch.ones_like(attention_average))
+         attention_average = (attention_average.sum(0) / size.sum(0)).cpu().detach().numpy()
+         if attention_sum is None:
+            attention_sum = attention_average
+         else:
+            attention_sum = attention_sum +  attention_average
       
+      for sigma in tqdm([3.0, 4.0, 5.0, 6.0]):
+         correlations_all_key = []
+         correlations_all_value = []
+         wandb.init(
+            project='LLM-merge', 
+            name=f'{model_ckt.split("/")[-1]}_{dataset}',
+            reinit=True,
+            config={
+               'sigma': sigma,
+               'model': model_ckt.split('/')[-1],
+            }
+         )
+         # for sample in tqdm(longbench_filtered):
+            # correlations_keys = []
+            # correlations_values= []
+         for layer_idx, attentions in enumerate(all_layers_attentions):
+            attention = attentions 
+
+            attention_average = torch.mean(attention, dim=1)
+
+            attention_average = attention_average[0]
+
+            attention = attention_average
+
+            id2token = []
+            for id in input_ids:
+               id2token.append(tokenizer.decode(id.item()))
+
+            id2token = id2token[0:]
+            indices = list(range(len(id2token)))
+            print(past_key_values[layer_idx][0].shape)
+
+            energy_key = cal_energy(past_key_values[layer_idx][0], sigma=sigma).cpu().detach().numpy()
+            energy_key_mean = cal_energy(past_key_values[layer_idx][0].mean(1), sigma=sigma).cpu().detach().numpy()
+            energy_value = cal_energy(past_key_values[layer_idx][1], sigma=sigma).cpu().detach().numpy()
+
+            size = torch.tril(torch.ones_like(attention))
+            attention_layer_idx = (attention.sum(0) / size.sum(0)).cpu().detach().numpy()
+
+            data = {
+               'attention': attention_sum,
+               'attention layer': attention_layer_idx,
+               'key energy': energy_key.mean(1).squeeze(),
+               'key mean energy': energy_key_mean.squeeze(),
+               'value energy': energy_value.mean(1).squeeze(),
+            } 
+            # breakpoint()
+            df = pd.DataFrame(data)
+            key_correlation = df['attention'].corr(df['key energy'])
+            value_correlation = df['attention'].corr(df['value energy'])
+            key_mean_correlation = df['attention'].corr(df['key mean energy'])
+            attention_correlation= df['attention'].corr(df['attention layer'])
+            print(key_correlation, value_correlation, key_mean_correlation, attention_correlation)
+            wandb.log({
+               'layer idx':layer_idx,
+               'key correlation': key_correlation, 
+               'value correlation': value_correlation,
+               # 'key_mean_correlation': key_mean_correlation,
+               'attention layer': attention_correlation,
+            })
+
+
+      
+         
    
 

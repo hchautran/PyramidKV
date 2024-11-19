@@ -357,7 +357,7 @@ class PiToMeKVCluster():
         self.pooling = pooling
 
         
-    def _cal_energy(self, metric:torch.Tensor, sigma:float=0.1):
+    def _cal_energy(self, metric:torch.Tensor, sigma:float=3.0):
         metric = F.normalize(metric, p=2, dim=-1) 
         sim = metric@metric.transpose(-1,-2)
         energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
@@ -383,7 +383,7 @@ class PiToMeKVCluster():
             # To calculate energy scores for text tokens, in this implementation, we use the Gaussian kernel. This shows better performance than the equation (4) in the paper 
             sim = metric@metric.transpose(-1,-2)
             # sim = F.elu((metric@metric.transpose(-1,-2) - margin)/0.01, alpha=alpha)
-            sigma = 0.1 
+            sigma = 4.0 
             energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi))) 
             indices =  torch.argsort(energy_score , descending=True)
             merge_idx = indices[..., :2*r]
@@ -453,16 +453,16 @@ class PiToMeKVCluster():
             k_cur = key[:, :, -self.window_size:, :]
             v_cur = value[:, :, -self.window_size:, :]
 
-            merge = self.pitome_text(k_past_compress.mean(1), ratio=0.505, class_token=False)
+            merge = self.pitome_text(k_past_compress.mean(1), ratio=0.95, class_token=False)
 
 
 
             B, H, L, D = k_past_compress.shape 
 
-            k = merge(k_past_compress)
-            v = merge(v_past_compress) 
-            key_states = torch.cat([k_sink, k, k_cur], dim = 2)
-            value_states = torch.cat([v_sink, v, v_cur], dim = 2)
+            k_merged = merge(k_past_compress)
+            v_merged = merge(v_past_compress) 
+            key_states = torch.cat([k_sink, k_merged, k_cur], dim = 2)
+            value_states = torch.cat([v_sink, v_merged, v_cur], dim = 2)
             return key_states, value_states
 
 
@@ -544,7 +544,7 @@ def init_pyramidkv(self, num_hidden_layers):
         max_capacity_prompt = self.config.max_capacity_prompt, 
         kernel_size = self.config.kernel_size,
         pooling = self.config.pooling
-        )
+    )
 
 
 def init_pitomekv(self, num_hidden_layers):

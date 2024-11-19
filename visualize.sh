@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0,2,3,4 python visualize_each_step.py
