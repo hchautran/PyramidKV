@@ -6,13 +6,12 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from models.llama.pitomekv import convert
+from transformers import LlamaForCausalLM , AutoTokenizer
 
 # datasets = ["narrativeqa", "qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "musique", \
             # "gov_report", "qmsum", "multi_news", "trec", "triviaqa", "samsum", \
             # "passage_count", "passage_retrieval_en", "lcc", "repobench-p"]
-datasets = ["qasper"]
+datasets = ["qasper"] 
 
 dataset2maxlen = {
     "narrativeqa": 128,
@@ -336,22 +335,27 @@ if __name__ == "__main__":
     )
 
 
-    from pyramidkv.monkeypatch import replace_llama,replace_mistral
     # replace_llama(args.method.lower())
     # replace_mistral(args.method.lower())
-    
-    model = AutoModelForCausalLM.from_pretrained(
+    if args.method.lower() == 'pyramidkv':
+        from models.llama.pyramidkv  import LlamaForCausalLM
+    else:
+        from transformers.models.llama.modeling_llama import LlamaForCausalLM
+
+    print('using:',args.model_path)
+    model = LlamaForCausalLM.from_pretrained(
         args.model_path,
         torch_dtype=torch.float16,
         low_cpu_mem_usage=True,
         device_map="auto",
         use_cache=args.use_cache,
-        attn_implementation=args.attn_implementation
+        attn_implementation=args.attn_implementation,
+        # load_in_8bit=True 
     )
-    convert(model)
-    
-
         
+    if args.method.lower() == 'pitomekv':
+        from models.llama.pitomekv import convert
+        convert(model)
 
     tokenizer.padding_side = "left"
     if tokenizer.pad_token is None:

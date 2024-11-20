@@ -12,9 +12,6 @@ from transformers.models.llama.modeling_llama import (
     LlamaSdpaAttention,
     LlamaForCausalLM,
     StaticCache,
-    flash_attn_varlen_func,
-    pad_input,
-    flash_attn_func
 )
 
 from transformers.modeling_outputs import BaseModelOutputWithPast
@@ -48,7 +45,7 @@ def pitome_text(
     
     with torch.no_grad():
         batch_idx = torch.arange(metric.size(0)).unsqueeze_(1).to(metric.device)
-        metric = metric[:, 4:-256, :]
+        metric = metric[:, 10:-128, :]
         if len(metric.shape)==4:
             B, T, _, _ = metric.shape 
         else:
@@ -79,9 +76,9 @@ def pitome_text(
 
     def merge(x: torch.Tensor, mode="mean") -> torch.Tensor:
         B, _, C = x.shape
-        x_sink = x[:, :4, :]
-        x_local = x[:, -256:, :]
-        x = x[:, 4:-256, :]
+        x_sink = x[:, :10, :]
+        x_local = x[:, -128:, :]
+        x = x[:, 10:-128, :]
 
         protected = x[batch_idx, protected_idx, :]
         src, dst = x[batch_idx, a_idx, :], x[batch_idx,  b_idx, :]
@@ -469,6 +466,7 @@ class PiToMeLlamaDecoderLayer(LlamaDecoderLayer):
             cache_position=cache_position,
         )
         # breakpoint()
+
         hidden_states = residual + hidden_states.to(residual.device)
         if hidden_states.shape[1] > 1:
             hidden_states = self.compress(hidden_states, hidden_states) 
@@ -627,6 +625,7 @@ def convert(
 
     for module in model.modules():
         if isinstance(module, LlamaDecoderLayer):
+            print(module)
             module.__class__ = PiToMeLlamaDecoderLayer
             # module.forward = PiToMeLlamaDecoderLayer.forward 
             module.init_sigma(sigma) 
@@ -634,5 +633,5 @@ def convert(
             module._info = model._info
             current_layer_idx += 1
         elif isinstance(module, LlamaModel):
+            print(module)
             module.__class__ = PiToMeLlamaModel 
-    print(model)

@@ -5,7 +5,7 @@ import matplotlib.gridspec as gridspec
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from models.cache import PiToMeCache
-from models.llama.pitomekv import convert
+from models.llama.pyramidkv import LlamaForCausalLM as PyramidLlamaForCausalLM 
 from datasets import load_dataset
 import numpy as np
 from tqdm.auto import tqdm
@@ -148,7 +148,7 @@ if __name__ == '__main__':
    model_ckt = LLAMA3_8B 
    model_ckt = LLAMA2_7B 
    tokenizer = AutoTokenizer.from_pretrained(model_ckt)
-   model = AutoModelForCausalLM.from_pretrained(
+   model = PyramidLlamaForCausalLM.from_pretrained(
       model_ckt,
       torch_dtype=torch.float16,
       low_cpu_mem_usage=True,
