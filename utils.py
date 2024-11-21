@@ -107,6 +107,7 @@ class LongBench(Dataset):
     def __init__(self, args):
         print('preparing data...')
         self.dataset = load_dataset('THUDM/LongBench', f'{args.dataset}_e', split='test')
+        self.dataset = self.dataset.filter(lambda x: x['length'] <= 4096)
         self.prompts = []
         self.inputs = []
         self.contexts = []

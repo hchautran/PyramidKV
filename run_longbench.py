@@ -29,7 +29,7 @@ def main(args):
     dataset = LongBench(args)
     
 
-    for i in tqdm(range(10)):
+    for i in tqdm(range(len(dataset))):
         sample = dataset[i]
         tokenized_prompts = tokenizer(sample['prompt'], padding="longest", return_tensors="pt", add_special_tokens=True).to('cuda')
         batch_input_ids = tokenized_prompts.input_ids
