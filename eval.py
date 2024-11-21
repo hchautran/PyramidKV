@@ -77,25 +77,8 @@ def scorer(dataset, predictions, answers, all_classes):
 if __name__ == '__main__':
     args = parse_args()
     
-    dataset_list = [
-        "narrativeqa",
-        "qasper",
-        "multifieldqa_en",
-        "hotpotqa",
-        "2wikimqa",
-        "musique",
-        "gov_report",
-        "qmsum",
-        "multi_news",
-        "trec",
-        "triviaqa",
-        "samsum",
-        "passage_count",
-        "passage_retrieval_en",
-        "lcc",
-        "repobench-p"
-        ]
-    
+    dataset_list = ["qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "gov_report", "multi_news", "trec", \
+        "triviaqa", "samsum", "passage_count", "passage_retrieval_en", "lcc", "repobench-p"]
     results_list = [
         ["dataset"],
         ["FullKV"],
@@ -111,8 +94,8 @@ if __name__ == '__main__':
         
         results_list[0].append(dataset)
         
-        for idx, method in enumerate(["FullKV", "random", "SnapKV", "StreamingLLM", "H2O", "PyramidKV","PiToMeKV"]):
-        # for idx, method in enumerate(["H2_global", "PyramidKV_global", "local"]):
+        # for idx, method in enumerate(["FullKV", "random", "SnapKV", "StreamingLLM", "H2O", "PyramidKV","PiToMeKV"]):
+        for idx, method in enumerate(["FullKV", "PyramidKV","PiToMeKV"]):
             try:
                 args.method = method
                 args.dataset = dataset
@@ -173,7 +156,7 @@ if __name__ == '__main__':
             except:
                 
                 results_list[idx+1].append(-1)
-                
+
                 print(f"dataset {args.dataset} method {args.method} scores {None}")
                 
     import csv

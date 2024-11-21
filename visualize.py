@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from models.cache import PiToMeCache
 from models.llama.pyramidkv import LlamaForCausalLM as PyramidLlamaForCausalLM 
 from datasets import load_dataset
 import numpy as np
