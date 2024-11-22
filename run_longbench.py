@@ -9,38 +9,58 @@ import torch
 from transformers import LlamaForCausalLM , AutoTokenizer
 from datasets import load_dataset
 from utils import LongBench, set_seed, model2maxlen, model2prompt, dataset2maxlen
+from accelerate import Accelerator
+from torch.utils.data import DataLoader
 
 
 
 
 def main(args):
-    
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model_path,
+        use_fast=args.use_fast_tokenizer,
+        padding_side="left"
+    )
+
+    accelerator =  Accelerator(mixed_precision='fp16')
+    model = LlamaForCausalLM.from_pretrained(
+        args.model_path,
+        torch_dtype=torch.float16,
+        device_map="auto",
+        use_cache=args.use_cache,
+        attn_implementation=args.attn_implementation,
+    )
+    model = accelerator.prepare(model)
+
+    tokenizer.padding_side = "left"
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+
+    model.eval()
+
+
     for key in model2maxlen:
         if key in args.model_path.lower():
             model_max_len = model2maxlen[key]
 
     print("Finish loading model and tokenizer")
     
-    model_name = args.model_path.split("/")[-1].lower()
+    dataset = LongBench(args, max_len=2024, max_num_examples=10)
+    loader = DataLoader(
+        dataset, 
+        batch_size=args.eval_batch_size, 
+        shuffle=True, 
+        collate_fn=lambda sample: dataset.collate_fn(sample, tokenizer, model_max_len)
+    )
+    loader = accelerator.prepare(loader)
+    num_sample = len(loader)
+    progress_bar = tqdm(enumerate(loader), total=num_sample)
 
-    os.makedirs(os.path.join(args.save_dir, f"{model_name}", args.dataset), exist_ok=True)
+    for sample, tokenized_prompts in loader:
 
-    fout = open(os.path.join(args.save_dir, f"{model_name}", args.dataset, f"{args.method}.json"), "w")
-    dataset = LongBench(args)
-    
-
-    for i in tqdm(range(len(dataset))):
-        sample = dataset[i]
-        tokenized_prompts = tokenizer(sample['prompt'], padding="longest", return_tensors="pt", add_special_tokens=True).to('cuda')
-        batch_input_ids = tokenized_prompts.input_ids
-        if len(batch_input_ids[0]) > model_max_len:
-            half = int(model_max_len/2)
-            prompt = tokenizer.decode(batch_input_ids[0][:half], skip_special_tokens=True)+tokenizer.decode(batch_input_ids[0][-half:], skip_special_tokens=True)
-            
-            tokenized_prompts = tokenizer(prompt, padding="longest", return_tensors="pt", add_special_tokens=True).to('cuda')
-            batch_input_ids = tokenized_prompts.input_ids
-
-        context_length = batch_input_ids.shape[-1]
+        context_length = tokenized_prompts.input_ids.shape[-1]
                 
         output = model.generate(
             **tokenized_prompts,
@@ -58,6 +78,11 @@ def main(args):
         sample['pred'] = outputs[0]
         # print(f"debbug batch_outputs {batch_outputs}")
         torch.cuda.empty_cache()
+        progress_bar.update(1)
+
+        model_name = args.model_path.split("/")[-1].lower()
+        os.makedirs(os.path.join(args.save_dir, f"{model_name}", args.dataset), exist_ok=True)
+        fout = open(os.path.join(args.save_dir, f"{model_name}", args.dataset, f"{args.method}.json"), "w")
         fout.write(json.dumps(sample) + "\n")
     
     
@@ -108,11 +133,6 @@ if __name__ == "__main__":
     
     set_seed(args.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.model_path,
-        use_fast=args.use_fast_tokenizer,
-        padding_side="left"
-    )
     if args.method.lower() == 'pyramidkv':
         from models.llama.pyramidkv  import LlamaForCausalLM
     elif args.method.lower() == 'pitomekv':
@@ -122,23 +142,4 @@ if __name__ == "__main__":
 
     print('using:',args.model_path, 'with', args.method.lower(), 'on', args.dataset)
     
-    model = LlamaForCausalLM.from_pretrained(
-        args.model_path,
-        torch_dtype=torch.float16,
-        device_map="auto",
-        use_cache=args.use_cache,
-        attn_implementation=args.attn_implementation,
-    )
-        
-
-    tokenizer.padding_side = "left"
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.pad_token_id = tokenizer.eos_token_id
-
-    model.eval()
-    save_dir = args.save_dir
-    
-    max_capacity_prompts = args.max_capacity_prompts
-
     main(args)

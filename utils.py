@@ -104,10 +104,12 @@ def build_chat(prompt):
 
 
 class LongBench(Dataset):
-    def __init__(self, args):
+    def __init__(self, args, max_len:int=None, max_num_examples:int=None):
         print('preparing data...')
         self.dataset = load_dataset('THUDM/LongBench', f'{args.dataset}_e', split='test')
-        self.dataset = self.dataset.filter(lambda x: x['length'] <= 4096)
+        if max_len is not None:
+            self.dataset = self.dataset.filter(lambda x: x['length'] <= max_len)
+        # self.dataset = self.dataset[:max_num_examples]
         self.prompts = []
         self.inputs = []
         self.contexts = []
@@ -166,3 +168,17 @@ class LongBench(Dataset):
             'all_classes': self.all_classes[idx],
             '_id': self._ids[idx]
         } 
+
+
+    def collate_fn(self, batch, tokenizer, model_max_len): 
+        
+        for sample  in batch:
+            tokenized_prompts = tokenizer(sample['prompt'], padding="longest", return_tensors="pt", add_special_tokens=True)
+            batch_input_ids = tokenized_prompts.input_ids
+            if len(batch_input_ids[0]) > model_max_len:
+                half = int(model_max_len/2)
+                prompt = tokenizer.decode(batch_input_ids[0][:half], skip_special_tokens=True)+tokenizer.decode(batch_input_ids[0][-half:], skip_special_tokens=True)
+                tokenized_prompts = tokenizer(prompt, padding="longest", return_tensors="pt", add_special_tokens=True)
+        return sample, tokenized_prompts 
+
+
