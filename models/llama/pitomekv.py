@@ -22,7 +22,6 @@ from transformers.models.llama.modeling_llama import (
     apply_rotary_pos_emb,
 )
 from transformers.cache_utils import Cache, DynamicCache
-from ..cache import PiToMeCache
 
 logger = logging.get_logger(__name__)
 
@@ -41,18 +40,19 @@ def pitome_text(
     metric: torch.Tensor, 
     ratio:float=1.0,
     sigma :torch.Tensor=4.0,
+    sink_size = 10
 ):
     
     with torch.no_grad():
         batch_idx = torch.arange(metric.size(0)).unsqueeze_(1).to(metric.device)
-        metric = metric[:, 10:-128, :]
+        metric = metric[:, sink_size:, :]
         if len(metric.shape)==4:
             B, T, _, _ = metric.shape 
         else:
             B, T, _ = metric.shape 
         
         if ratio == 1.0:
-            return do_nothing
+            return do_nothing, torch.arange(T).to(metric.device)
 
         if len(metric.shape) == 2:
             metric = metric[None,...]
@@ -67,27 +67,26 @@ def pitome_text(
 
         merge_idx = indices[..., :2*r]
         protected_idx = indices[..., 2*r:]
-        a_idx, b_idx = merge_idx[..., ::2], merge_idx[..., 1::2]
+        src_idx, dst_idx = merge_idx[..., ::2], merge_idx[..., 1::2]
+        compressed_idx = torch.cat([protected_idx, dst_idx], dim=-1).sort(dim=-1).values
 
-        sim = sim.gather(dim=-1, index=b_idx.unsqueeze(-2).expand(B, T, r)) 
-        sim = sim.gather(dim=-2, index=a_idx.unsqueeze(-1).expand(B, r, r ))
+        sim = sim.gather(dim=-1, index=compressed_idx.unsqueeze(-2).expand(B, T, compressed_idx.shape[-1])) 
+        sim = sim.gather(dim=-2, index=src_idx.unsqueeze(-1).expand(B, src_idx.shape[-1], compressed_idx.shape[-1] ))
         _, dst_idx = sim.max(dim=-1) 
-        after_merted_idx = torch.cat([protected_idx, b_idx], dim=-1).sort(dim=-1).indices
 
     def merge(x: torch.Tensor, mode="mean") -> torch.Tensor:
         B, _, C = x.shape
-        x_sink = x[:, :10, :]
-        x_local = x[:, -128:, :]
-        x = x[:, 10:-128, :]
+        x_sink = x[:, :sink_size, :]
+        x_context = x[:, sink_size:, :]
+        x_compressed = torch.gather(x_context, dim=-2, index=compressed_idx.unsqueeze(-1).expand(B, -1, C))
 
-        protected = x[batch_idx, protected_idx, :]
-        src, dst = x[batch_idx, a_idx, :], x[batch_idx,  b_idx, :]
-        dst = dst.scatter_reduce(-2, dst_idx.unsqueeze(2).expand(B, r, C), src, reduce=mode)
-        x_compressed = torch.cat([protected, dst], dim=1) 
-        x_compressed = torch.gather(x_compressed, dim=1, index=after_merted_idx.unsqueeze(-1).expand(B, -1, C))
-        return torch.cat([x_sink, x_compressed, x_local], dim=1)
+        if mode != "prune":
+            x_merged = x_context[batch_idx, src_idx, :]
+            x_compressed = x_compressed.scatter_reduce(-2, dst_idx.unsqueeze(2).expand(B, r, C), x_merged, reduce=mode)
 
-    return merge  
+        return torch.cat([x_sink, x_compressed], dim=1)
+
+    return merge, compressed_idx
 
 
 def merge_mean(
@@ -233,12 +232,6 @@ class LlamaRMSNorm(nn.Module):
     def extra_repr(self):
         return f"{tuple(self.weight.shape)}, eps={self.variance_epsilon}"
 
-def cal_energy(metric:torch.Tensor, sigma:float=0.1):
-   metric = F.normalize(metric, p=2, dim=-1) 
-   sim = metric@metric.transpose(-1,-2)
-   energy_score = (torch.exp(-(((1 - sim)/sigma)**2 * 0.5))).mean(-1) *  1/(sigma*torch.sqrt(torch.tensor(2*torch.pi)))
-   # energy_score = F.elu(sim - sigma).mean(-1)
-   return energy_score
 
 
 ALL_LAYERNORM_LAYERS.append(LlamaRMSNorm)
@@ -1026,6 +1019,7 @@ class LlamaModel(LlamaPreTrainedModel):
         self.gradient_checkpointing = False
 
         # Initialize weights and apply final processing
+        self.init_sigma()
         self.post_init()
 
     def get_input_embeddings(self):
@@ -1033,6 +1027,10 @@ class LlamaModel(LlamaPreTrainedModel):
 
     def set_input_embeddings(self, value):
         self.embed_tokens = value
+
+    def init_sigma(self):
+        self.sigmas = [0.0 + (3.0 * i/len(self.layers)) for i in range(len(self.layers))] 
+
 
 
     @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
@@ -1178,88 +1176,36 @@ class LlamaModel(LlamaPreTrainedModel):
                             schedule_prefill_decay_ratio = prefill_decay_ratio
                         
                         if (idx % layerwise_downsample_interval) == 0:
-                            # attn_weights = layer_outputs[1].mean(dim=1) # average over attention heads
-                            
-                            # recent2context_attn_weights = attn_weights[:, -(1 + recent_length):, :-(1 + recent_length)]
-                            # recent2context_attn_weights *= torch.linspace(1.0, distance_weight, recent2context_attn_weights.shape[1], device=recent2context_attn_weights.device)[None, :, None] # weight the recent2context attention weights by distance
-                            # recent2context_attn_weights = recent2context_attn_weights.mean(dim=-2) 
-                            # recent2context_attn_weights[:, :streamingllm_sink_len] = torch.finfo(recent2context_attn_weights.dtype).max # always keep the sink tokens
                             context_hidden_states = hidden_states[:, :-(1 + recent_length)]
-                            energy_scores =  cal_energy(context_hidden_states, sigma=4.0)
-                            # print(hidden_states.shape)
-                            
+
 
                             context_length = context_hidden_states.shape[-2] 
                             
                             if context_length > min_context_length and schedule_prefill_decay_ratio < 1.0:
-                                topk = int(context_length * schedule_prefill_decay_ratio) if int(context_length * schedule_prefill_decay_ratio) > min_context_length else context_length
-                                recent2context_topk_indices = torch.topk(energy_scores, topk, dim=-1, largest=False, sorted=False).indices.sort(dim=-1).values
+                                merge, compressed_idx = pitome_text(
+                                    metric=context_hidden_states, 
+                                    ratio=schedule_prefill_decay_ratio, 
+                                    sigma=self.sigmas[idx],
+                                    sink_size=streamingllm_sink_len,
+                                )
 
                                 # gather the original position ids for the selected topk indices
-                                selected_position_ids = selected_position_ids.to(recent2context_topk_indices.device)
+                                selected_position_ids = selected_position_ids.to(compressed_idx.device)
+                                sink_selected_position_ids = selected_position_ids[:, :streamingllm_sink_len] 
+                                context_selected_position_ids= selected_position_ids[:, streamingllm_sink_len:] 
                                 selected_position_ids = torch.cat([
-                                    torch.gather(selected_position_ids[:, :-(1 + recent_length)], dim=-1, index=recent2context_topk_indices),
-                                    selected_position_ids[:, -(1 + recent_length):],
+                                    sink_selected_position_ids,
+                                    torch.gather(context_selected_position_ids[:, :-(1 + recent_length)], dim=-1, index=compressed_idx),
+                                    context_selected_position_ids[:, -(1 + recent_length):],
                                 ], dim=-1)
 
-                                compressed_hidden_states = torch.gather(context_hidden_states, dim=-2, index=recent2context_topk_indices.unsqueeze(-1).expand(-1, -1, hidden_states.shape[-1]))
+                                compressed_hidden_states = prune(merge, context_hidden_states ) 
                                 hidden_states = torch.cat([compressed_hidden_states, hidden_states[:, -(1 + recent_length):]], dim=1)
+                                # breakpoint()
 
                         if past_kv_seq_lens is not None:
                             past_kv_seq_lens.append(past_key_values.get_seq_length(-1))
-                    # else:
-                    #     ### generation stage ###
-                    #     attn_weights = layer_outputs[1].mean(dim=1) # average over attention heads
-                    #     recent_attn_weights[idx] = torch.cat([recent_attn_weights[idx].to(attn_weights.device), torch.zeros((recent_attn_weights[idx].shape[0], recent_attn_weights[idx].shape[1], 1), device=attn_weights.device)], dim=-1)
-                    #     attn_weights = torch.cat([recent_attn_weights[idx], attn_weights], dim=-2)                    
-                    #     past_kv_seq_len = past_kv_seq_lens[idx]
-                    #     current_kv_seq_len = next_decoder_cache.seen_tokens
-
-                    #     if gen_decay_strategy == "linear":
-                    #         schedule_gen_decay_ratio = (1.0 - gen_decay_ratio) * (idx / self.config.num_hidden_layers) + gen_decay_ratio
-                    #     if gen_decay_strategy == "cosine":
-                    #         schedule_gen_decay_ratio = (1.0 - gen_decay_ratio) * (math.cos(math.pi * idx / self.config.num_hidden_layers) + 1) / 2 + gen_decay_ratio
-                    #     else:
-                    #         schedule_gen_decay_ratio = gen_decay_ratio
-
-                    #     if current_kv_seq_len - recent_length - past_kv_seq_len >= exceed_length_to_compress:
-                    #         recent2context_attn_weights = attn_weights[:, -(1 + recent_length):, -(1 + recent_length + exceed_length_to_compress):-(1 + recent_length)]
-                    #         recent2context_attn_weights *= torch.linspace(1.0, distance_weight, recent2context_attn_weights.shape[1], device=recent2context_attn_weights.device)[None, :, None]
-                    #         recent2context_attn_weights = recent2context_attn_weights.mean(dim=-2) 
-                    #         context_length = recent2context_attn_weights.shape[-1] * gen_compress_ratio
-
-                    #         topk = max(int(context_length * schedule_gen_decay_ratio), 1)
-                    #         recent2context_topk_indices = torch.topk(
-                    #             recent2context_attn_weights, 
-                    #             topk,
-                    #             dim=-1, largest=True
-                    #         ).indices.sort(dim=-1).values
-                    #         key_states, value_states = next_decoder_cache.key_cache[idx], next_decoder_cache.value_cache[idx]
-
-                    #         # gather key_states from recent2context_topk_indices
-                    #         gather_indices = recent2context_topk_indices[:, None, :, None].expand(-1, key_states.shape[1], -1, key_states.shape[3])
-                    #         key_states = torch.cat([
-                    #             key_states[:, :,  :-(1 + recent_length + exceed_length_to_compress)],
-                    #             torch.gather(key_states[:, :,  -(1 + recent_length + exceed_length_to_compress):-(1 + recent_length)], dim=-2, index=gather_indices),
-                    #             key_states[:, :, -(1 + recent_length):],
-                    #         ], dim=-2)
-                    #         value_states = torch.cat([
-                    #             value_states[:, :,  :-(1 + recent_length + exceed_length_to_compress)],
-                    #             torch.gather(value_states[:, :,  -(1 + recent_length + exceed_length_to_compress):-(1 + recent_length)], dim=-2, index=gather_indices),
-                    #             value_states[:, :, -(1 + recent_length):],
-                    #         ], dim=-2)
-                            
-                    #         # attention weights [bsz, 1 + recent_length, seq_len]
-                    #         attn_weights = torch.cat([
-                    #             attn_weights[:, :,  :-(1 + recent_length + exceed_length_to_compress)],
-                    #             torch.gather(attn_weights[:, :,  -(1 + recent_length + exceed_length_to_compress):-(1 + recent_length)], dim=-1, index=recent2context_topk_indices[:, None, :].expand(-1, attn_weights.shape[1], -1)),
-                    #             attn_weights[:, :, -(1 + recent_length):],
-                    #         ], dim=-1)
-                            
-                    #         next_decoder_cache.key_cache[idx] = key_states
-                    #         next_decoder_cache.value_cache[idx] = value_states
-                    #         past_kv_seq_lens[idx] = key_states.shape[-2] - recent_length   
-                    #     recent_attn_weights[idx] = attn_weights[:, -(1 + recent_length):]
+               
 
             if output_attentions:
                 all_self_attns += (layer_outputs[1],)

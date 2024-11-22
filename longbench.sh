@@ -8,9 +8,11 @@ results_dir=results_long_bench/meta-llama-3-8b-instruct
 
 
 # datasets = []
-for dataset in "qasper" "multifieldqa_en" "hotpotqa" "2wikimqa" "gov_report" "multi_news" "trec" "triviaqa" "samsum" "passage_count" "passage_retrieval_en" "lcc" "repobench-p"
+# for dataset in "qasper" "multifieldqa_en" "hotpotqa" "2wikimqa" "gov_report" "multi_news" "trec" "triviaqa" "samsum" "passage_count" "passage_retrieval_en" "lcc" "repobench-p"
+for dataset in "qasper" "gov_report" "multi_news" "lcc" "repobench-p"
 do
-    for method in PiToMeKV FullKV PyramidKV
+    for method in PiToMeKV  PyramidKV FullKV
+    # for method in PiToMeKV FullKV PyramidKV
     do
         python run_longbench.py \
             --method ${method} \

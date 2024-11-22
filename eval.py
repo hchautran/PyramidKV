@@ -82,10 +82,10 @@ if __name__ == '__main__':
     results_list = [
         ["dataset"],
         ["FullKV"],
-        ["random"],
-        ["SnapKV"],
-        ["StreamingLLM"],
-        ["H2O"],
+        # ["random"],
+        # ["SnapKV"],
+        # ["StreamingLLM"],
+        # ["H2O"],
         ["PyramidKV"],
         ["PiToMeKV"],
     ]
